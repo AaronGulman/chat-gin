@@ -30,8 +30,6 @@ func Init() {
 		panic(err)
 	}
 
-	fmt.Println("Connected to the DB: ", DB_URL)
-
 	DB.SetConnMaxLifetime(time.Minute * 3)
 	DB.SetMaxOpenConns(10)
 	DB.SetMaxIdleConns(10)
