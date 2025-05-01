@@ -2,7 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -11,27 +11,29 @@ import (
 )
 
 var DB *sql.DB
-var err error
 
 func Init() {
-	err = godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Println("[WARN] Could not load .env file, using system env")
+	}
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("[FATAL] DB_URL not set in environment")
+	}
+
+	var err error
+	DB, err = sql.Open("mysql", dbURL)
 	if err != nil {
-		fmt.Println("Error loading .env file")
+		log.Fatalf("[FATAL] Failed to open database connection: %v", err)
 	}
 
-	DB_URL := os.Getenv("DB_URL")
-	if DB_URL == "" {
-		fmt.Println("Error loading .env file", err)
-	}
-	fmt.Println("This is the url: ", DB_URL)
-
-	DB, err = sql.Open("mysql", DB_URL)
-	if err != nil {
-		panic(err)
+	if err = DB.Ping(); err != nil {
+		log.Fatalf("[FATAL] Could not connect to the database: %v", err)
 	}
 
-	DB.SetConnMaxLifetime(time.Minute * 3)
+	DB.SetConnMaxLifetime(3 * time.Minute)
 	DB.SetMaxOpenConns(10)
 	DB.SetMaxIdleConns(10)
 
+	log.Println("[INFO] Database connection successfully initialized")
 }
